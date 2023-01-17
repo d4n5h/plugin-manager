@@ -110,12 +110,19 @@ class PluginManager {
                 }
 
                 if (isActive) {
+                    const that = this;
+                    const provide = function(provider){
+                        if (typeof provider != 'object' || Array.isArray(provider)) throw new Error('Invalid provider, must be an object')
+                        if (!that.registry[pluginName]) that.registry[pluginName] = {}
+                        that.registry[pluginName] = { ...that.registry[pluginName], ...provider }
+                    }
                     if (pluginPackage?.plugin?.consume) {
                         const consume = pluginPackage.plugin.consume
                         if (consume == '*') {
-                            this.registry[pluginName] = instance(this.registry)
+                            instance({ ...this.registry, provide })
+                            resolve(true)
                         } else if (Array.isArray(consume)) {
-                            const newRegistry = {}
+                            const newRegistry = { provide }
                             for (let i = 0; i < consume.length; i++) {
                                 const toConsume = consume[i];
                                 if (this.registry[toConsume]) {
@@ -124,15 +131,17 @@ class PluginManager {
                                     throw new Error(`Can't consume ${toConsume} in plugin ${pluginName}`)
                                 }
                             }
-                            this.registry[pluginName] = instance(newRegistry)
+                            instance(newRegistry)
                             resolve(true)
                         } else {
                             throw `Consume property is not valid for plugin: ${pluginName}, it must be an array of strings or "*"`
                         }
                     } else {
-                        this.registry[pluginName] = instance(this.registry)
+                        instance(this.registry)
                         resolve(true)
                     }
+                } else {
+                    resolve(true)
                 }
             } catch (error) {
                 reject(`Can't register plugin ${pluginName}:${error}`)

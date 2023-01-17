@@ -1,0 +1,27 @@
+{
+  "name": "plugin-manager",
+  "version": "1.0.0",
+  "description": "Simple plugin manager for NodeJS",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/d4n5h/plugin-manager.git"
+  },
+  "keywords": [
+    "node",
+    "plugin",
+    "manager",
+    "architechture",
+    "system",
+    "simple"
+  ],
+  "author": "Daniel Shlomo",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/d4n5h/plugin-manager/issues"
+  },
+  "homepage": "https://github.com/d4n5h/plugin-manager#readme"
+}

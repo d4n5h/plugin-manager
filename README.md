@@ -17,7 +17,7 @@ yarn add @d4n5h/plugin-manager
 ## How to use
 
 ```javascript
-const PluginManager = require('@d4n5h/plugin-manager')
+const PluginManager = require('@danisl99/plugin-manager')
 const pm = new PluginManager();
 const path = require('path')
 

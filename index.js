@@ -20,11 +20,12 @@ class PluginManager {
         return new Promise((resolve, reject) => {
             try {
                 const plugins = fs.readdirSync(privatePath)
-                if (plugins.length > 0) {
-                    for (let i = 0; i < plugins.length; i++) {
-                        const pluginName = plugins[i];
-                        this.register(path.join(privatePath, pluginName))
-                        if (i == plugins.length - 1) resolve(true)
+                const ordered = this._prioritize(privatePath, plugins)
+                if (ordered.length > 0) {
+                    for (let i = 0; i < ordered.length; i++) {
+                        const plugin = ordered[i];
+                        this.register(path.join(privatePath, plugin.name))
+                        if (i == ordered.length - 1) resolve(true)
                     }
                 } else {
                     resolve(true)
@@ -33,7 +34,6 @@ class PluginManager {
                 reject(error)
             }
         })
-
     }
 
     /**
@@ -44,9 +44,11 @@ class PluginManager {
     async load(packagePath) {
         return new Promise((resolve, reject) => {
             try {
+                let stack = [], leftOver = []
                 if (!fs.existsSync(packagePath)) throw 'Package file doesn\'t exist'
                 const pkg = require(packagePath),
                     names = [...Object.keys(pkg.dependencies), ...Object.keys(pkg.devDependencies)]
+
                 if (names.length > 0) {
                     for (let i = 0; i < names.length; i++) {
                         const name = names[i],
@@ -56,9 +58,33 @@ class PluginManager {
 
                         if (fs.existsSync(jsonPath)) {
                             const instance = require(jsonPath)
-                            if (instance.plugin) this.register(pgkDir)
+                            instance.pkgDir = pgkDir
+                            console.log(instance)
+                            if (instance?.plugin) {
+                                if (instance?.plugin?.priority) {
+                                    stack.push(instance)
+                                } else {
+                                    leftOver.push(instance)
+                                }
+                            }
                         }
-                        if (i == names.length - 1) resolve(true)
+
+                        // Prioritize
+                        stack.sort(function (a, b) {
+                            return a.plugin.priority - b.plugin.priority;
+                        });
+
+                        stack = [...stack, ...leftOver]
+
+                        if(stack.length > 0){
+                            for (let x = 0; x < stack.length; x++) {
+                                const instance = stack[x];
+                                this.register(instance.pgkDir)
+                                if (x == stack.length - 1) resolve(true)
+                            }
+                        } else {
+                            resolve(true)
+                        }
                     }
                 } else {
                     resolve(true)
@@ -88,6 +114,30 @@ class PluginManager {
         this.registry = { ...this.registry, ...provider }
     }
 
+    _prioritize(dirPath, pluginNames) {
+        if (pluginNames && Array.isArray(pluginNames) && pluginNames.length > 0) {
+            let stack = [], leftOver = []
+            for (let i = 0; i < pluginNames.length; i++) {
+                const name = pluginNames[i];
+                const json = require(path.join(dirPath, name, 'package.json'))
+                if (json?.plugin?.priority) {
+                    stack.push(json)
+                } else {
+                    leftOver.push(json)
+                }
+            }
+
+            stack.sort(function (a, b) {
+                return a.plugin.priority - b.plugin.priority;
+            });
+
+            stack = [...stack, ...leftOver]
+
+            return stack;
+        } else {
+            return []
+        }
+    }
     /**
      * Register a plugin
      * @param {string} pluginPath Absolute path to the plugin's directory
@@ -111,7 +161,7 @@ class PluginManager {
 
                 if (isActive) {
                     const that = this;
-                    const provide = function(provider){
+                    const provide = function (provider) {
                         if (typeof provider != 'object' || Array.isArray(provider)) throw new Error('Invalid provider, must be an object')
                         if (!that.registry[pluginName]) that.registry[pluginName] = {}
                         that.registry[pluginName] = { ...that.registry[pluginName], ...provider }

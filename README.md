@@ -70,13 +70,15 @@ A plugin is basically a node module, but you need to add a "plugin" property in 
   "license": "ISC",
   "plugin": {
     "active": true,
-    "consume": "*"
+    "consume": "*",
+    "priority": 0
   }
 }
 ```
 
-1. "active" property: true = active || false = not active || not set = active
+1. "active" property (optional): true = active || false = not active || not set = active
 2. "consume" property: "*" = consume all the registry || array of plugin names to consume like ["logger", "other-plugin-name"]
+3. "priority" property (optional): lowest number (0) will be called before higher numbers
 
 ## Plugin code
 

@@ -1,5 +1,5 @@
 {
-  "name": "@d4n5h/plugin-manager",
+  "name": "@danisl99/plugin-manager",
   "version": "1.0.0",
   "description": "Simple plugin manager for NodeJS",
   "main": "index.js",
